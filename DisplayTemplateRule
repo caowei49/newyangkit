@@ -1,0 +1,56 @@
+package com.huawei.oml.lsp.validate.oml.rule;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
+import com.huawei.oml.core.OmlDocument;
+import com.huawei.oml.core.common.RangedString;
+import com.huawei.oml.core.data.cmd.AttributeData;
+import com.huawei.oml.core.data.cmd.CmdStatementData;
+import com.huawei.oml.core.data.cmd.CommandData;
+import com.huawei.oml.core.data.cmd.DisplayTemplateData;
+import com.huawei.oml.core.data.cmd.FuncActionData;
+import com.huawei.oml.core.data.cmd.OmlData;
+import com.huawei.oml.core.data.cmd.StatementData;
+import com.huawei.oml.lsp.validate.ValidationMessage;
+import com.huawei.oml.lsp.validate.ValidationRule;
+import com.huawei.oml.lsp.validate.ValidatorContext;
+import com.huawei.oml.util.Option;
+import com.huawei.oml.util.sequence.Sequence;
+
+public class DisplayTemplateRule extends ValidationRule<OmlData, OmlDocument> {
+
+	@Override
+	public List<ValidationMessage> validate(ValidatorContext<OmlDocument> context, OmlData data) {
+		List<ValidationMessage> messages = new ArrayList<>();
+		Set<String> allDisplayTemplateNameList = Sequence.from(data.getDisplayTemplates())
+				.map(DisplayTemplateData::getName)
+				.map(RangedString::getText)
+				.toSet();
+
+		for (AttributeData attributeData : Sequence.from(data.getCommands())
+				.flatMap(CommandData::getStatements)
+				.filterMap(StatementData::getFuncStatement)
+				.flatMap(CmdStatementData::getActions)
+				.filter(a -> a.getSubAction().getText().equals("format"))
+				.flatMap(FuncActionData::getSubAttributes)) {
+			RangedString name = Option.from(attributeData.getIdentifierValue()).get();
+
+			if (name == null) {
+				ValidationMessage message = warning(attributeData, "Template name must be identifier");
+				messages.add(message);
+			} else if (!allDisplayTemplateNameList.contains(name.getText())) {
+				ValidationMessage message = warning(name, "Template `%s` does not exists", name.getText());
+				messages.add(message);
+			}
+		}
+
+		return messages;
+	}
+
+	@Override
+	public String toString() {
+		return "DisplayTemplatesRule []";
+	}
+}
