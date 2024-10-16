@@ -1,0 +1,132 @@
+package com.huawei.oml.lsp.validate.mim.rule;
+
+
+import com.huawei.oml.core.MimDocument;
+import com.huawei.oml.core.data.common.OccursData;
+import com.huawei.oml.core.data.mim.MimClassData;
+import com.huawei.oml.core.data.mim.MimData;
+import com.huawei.oml.core.data.mim.MimFieldData;
+import com.huawei.oml.lsp.validate.ValidationMessage;
+import com.huawei.oml.lsp.validate.ValidationRule;
+import com.huawei.oml.lsp.validate.ValidatorContext;
+import com.huawei.oml.util.sequence.Sequence;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class DataTypeRangeRule extends ValidationRule<MimData, MimDocument> {
+
+    private final Long CHARMIN = -127L;
+    private final Long CHARMAX = 127L;
+    private final Long UCHARMIN = 0L;
+    private final Long UCHARMAX = 255L;
+    private final Long SHORTMIN = -32768L;
+    private final Long SHORTMAX = 32767L;
+    private final Long USHORTMIN = 0L;
+    private final Long USHORTMAX = 65535L;
+    private final Long INT32MIN = -2147483648L;
+    private final Long INT32MAX = 2147483647L;
+    private final Long UINT32MIN = 0L;
+    private final Long UINT32MAX = 4294967295L;
+    private final Long INT64MIN = -9223372036854775808L;
+    private final Long INT64MAX = 9223372036854775807L;
+    private final Long UINT64MIN = 0L;
+    private final Long UINT64MAX = 9223372036854775807L;
+    private final Long ENUM1MIN = 0L;
+    private final Long ENUM1MAX = 255L;
+    private final Long ENUMMIN = 0L;
+    private final Long ENUMMAX = 4294967295L;
+    private final Long BITMIN = 0L;
+    private final Long BITMAX = 1L;
+
+
+    @Override
+    public List<ValidationMessage> validate(ValidatorContext<MimDocument> context, MimData data) {
+        List<ValidationMessage> messages = new ArrayList<>();
+        List<MimClassData> classData = data.getClasses();
+        for (MimClassData mimClassData : classData) {
+            List<MimFieldData> fields = mimClassData.getFields();
+            for (MimFieldData mimFieldData : fields) {
+                String datatype = mimFieldData.getDataType().getText();
+                OccursData occurs = mimFieldData.getOccurs();
+                if (occurs != null) {
+                    switch (datatype) {
+                        case "CHAR":
+                            if (occurs.getFrom() < CHARMIN || occurs.getTo() > CHARMAX) {
+                                ValidationMessage message = warning(occurs, "`%s` should be between `%s` and `%s`", datatype, CHARMIN, CHARMAX);
+                                messages.add(message);
+                            }
+                        case "UCHAR":
+                            if (occurs.getFrom() < UCHARMIN || occurs.getTo() > UCHARMAX) {
+                                ValidationMessage message = warning(occurs, "`%s` should be between `%s` and `%s`", datatype, UCHARMIN, UCHARMAX);
+                                messages.add(message);
+                            }
+                            break;
+                        case "SHORT":
+                            if (occurs.getFrom() < SHORTMIN || occurs.getTo() > SHORTMAX) {
+                                ValidationMessage message = warning(occurs, "`%s` should be between `%s` and `%s`", datatype, SHORTMIN, SHORTMAX);
+                                messages.add(message);
+                            }
+                            break;
+                        case "USHORT":
+                            if (occurs.getFrom() < USHORTMIN || occurs.getTo() > USHORTMAX) {
+                                ValidationMessage message = warning(occurs, "`%s` should be between `%s` and `%s`", datatype, USHORTMIN, USHORTMAX);
+                                messages.add(message);
+                            }
+                            break;
+                        case "INT32":
+                            if (occurs.getFrom() < INT32MIN || occurs.getTo() > INT32MAX) {
+                                ValidationMessage message = warning(occurs, "`%s` should be between `%s` and `%s`", datatype, INT32MIN, INT32MAX);
+                                messages.add(message);
+                            }
+                            break;
+                        case "UINT32":
+                            if (occurs.getFrom() < UINT32MIN || occurs.getTo() > UINT32MAX) {
+                                ValidationMessage message = warning(occurs, "`%s` should be between `%s` and `%s`", datatype, UINT32MIN, UINT32MAX);
+                                messages.add(message);
+                            }
+                            break;
+                        case "INT64":
+                            if (occurs.getFrom() < INT64MIN || occurs.getTo() > INT64MAX) {
+                                ValidationMessage message = warning(occurs, "`%s` should be between `%s` and `%s`", datatype, INT64MIN, INT64MAX);
+                                messages.add(message);
+                            }
+                            break;
+                        case "UINT64":
+                            if (occurs.getFrom() < UINT64MIN || occurs.getTo() > UINT64MAX) {
+                                ValidationMessage message = warning(occurs, "`%s` should be between `%s` and `%s`", datatype, UINT64MIN, UINT64MAX);
+                                messages.add(message);
+                            }
+                            break;
+                        case "ENUM1":
+                            if (occurs.getFrom() < ENUM1MIN || occurs.getTo() > ENUM1MAX) {
+                                ValidationMessage message = warning(occurs, "`%s` should be between `%s` and `%s`", datatype, ENUM1MIN, ENUM1MAX);
+                                messages.add(message);
+                            }
+                            break;
+                        case "ENUM":
+                            if (occurs.getFrom() < ENUMMIN || occurs.getTo() > ENUMMAX) {
+                                ValidationMessage message = warning(occurs, "`%s` should be between `%s` and `%s`", datatype, ENUMMIN, ENUMMAX);
+                                messages.add(message);
+                            }
+                            break;
+                        case "BIT":
+                            if (occurs.getFrom() < BITMIN || occurs.getTo() > BITMAX) {
+                                ValidationMessage message = warning(occurs, "`%s` should be between `%s` and `%s`", datatype, BITMIN, BITMAX);
+                                messages.add(message);
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+        }
+        return messages;
+    }
+
+    @Override
+    public String toString() {
+        return "DataTypeRangeRule []";
+    }
+}
