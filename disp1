@@ -1,0 +1,55 @@
+package com.huawei.oml.lsp.validate.oml.rule;
+
+import com.huawei.oml.core.OmlDocument;
+import com.huawei.oml.core.common.RangedString;
+import com.huawei.oml.core.data.cmd.*;
+import com.huawei.oml.lsp.validate.ValidationMessage;
+import com.huawei.oml.lsp.validate.ValidationRule;
+import com.huawei.oml.lsp.validate.ValidatorContext;
+import com.huawei.oml.util.sequence.Sequence;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class DisplayTemplateRule extends ValidationRule<OmlData, OmlDocument> {
+
+    @Override
+    public List<ValidationMessage> validate(ValidatorContext<OmlDocument> context, OmlData data) {
+        List<ValidationMessage> messages = new ArrayList<>();
+        List<String> allDisplayTemplateNameList = new ArrayList<>();
+        List<DisplayTemplateData> displayTemplates = data.getDisplayTemplates();
+
+        for (DisplayTemplateData displayTemplateData : displayTemplates) {
+            allDisplayTemplateNameList.add(displayTemplateData.getName().getText());
+        }
+
+        for (CommandData commandData : data.getCommands()) {
+            List<StatementData> statements = commandData.getStatements();
+            for (StatementData statementData : statements) {
+                CmdStatementData funcStatement = statementData.getFuncStatement();
+                if (funcStatement != null) {
+                    List<FuncActionData> actions = funcStatement.getActions();
+                    for (FuncActionData actionData : actions) {
+                        if (actionData.getSubAction().getText().equals("format")) {
+                            List<AttributeData> subAttributes = actionData.getSubAttributes();
+                            for (AttributeData attributeData : subAttributes) {
+                                String text = attributeData.getIdentifierValue().getText();
+                                if (!allDisplayTemplateNameList.contains(text)) {
+                                    ValidationMessage message = warning(attributeData, "template `%s` does not exists", text);
+                                    messages.add(message);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return messages;
+    }
+
+    @Override
+    public String toString() {
+        return "DisplayTemplatesRule []";
+    }
+}
