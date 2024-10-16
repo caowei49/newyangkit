@@ -1,0 +1,67 @@
+package com.huawei.oml.lsp.validate.mim.rule;
+
+import com.huawei.oml.core.MimDocument;
+import com.huawei.oml.core.common.RangedString;
+import com.huawei.oml.core.data.mim.MimClassData;
+import com.huawei.oml.core.data.mim.MimData;
+import com.huawei.oml.core.data.mim.MimFieldData;
+import com.huawei.oml.core.data.mim.MimReferenceFieldData;
+import com.huawei.oml.lsp.validate.ValidationMessage;
+import com.huawei.oml.lsp.validate.ValidationRule;
+import com.huawei.oml.lsp.validate.ValidatorContext;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+public class DamClassRule extends ValidationRule<MimData, MimDocument> {
+
+
+    @Override
+    public List<ValidationMessage> validate(ValidatorContext<MimDocument> context, MimData data) {
+        List<ValidationMessage> messages = new ArrayList<>();
+
+        List<MimClassData> classData = data.getClasses();
+        List<String> dimClassNameList = new ArrayList<>();
+        Map<String, List<String>> temp  = new HashMap<>();
+        for (MimClassData mimClassData : classData) {
+            RangedString classType = mimClassData.getClassType();
+            if (classType != null) {
+                String classTypeName = classType.getText();
+                if (classTypeName.equals("CFG")) {
+                    String className = mimClassData.getClassName().getText();
+                    List<String> fields = mimClassData.getFields().stream().map(MimFieldData::getName).map(RangedString::getText).collect(Collectors.toList());
+                    temp.put(className, fields);
+                }
+            }
+        }
+        for (MimClassData mimClassData : classData) {
+            RangedString classType = mimClassData.getClassType();
+            if (classType != null) {
+                String classTypeName = classType.getText();
+                if (classTypeName.equals("DAM")) {
+                    String className = mimClassData.getReferenceToParent().getText();
+                    if(temp.containsKey(className)){
+                        List<String> dimNameList = temp.get(className);
+                        List<MimReferenceFieldData> referenceFields = mimClassData.getReferenceFields();
+                        for(MimReferenceFieldData mimReferenceFieldData : referenceFields){
+                            String localName = mimReferenceFieldData.getLocalName().getText();
+                            if(!dimNameList.contains(localName)){
+                                ValidationMessage message = warning(mimReferenceFieldData, "`%s` does not exist in subscribed dim", localName);
+                                messages.add(message);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return messages;
+    }
+
+    @Override
+    public String toString() {
+        return "DamClassRule []";
+    }
+}
